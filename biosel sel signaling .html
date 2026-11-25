@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartExam – Online Examination System</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Konfigurasi Tailwind Custom -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        accent: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Kustomisasi Scrollbar & Utilitas Tambahan */
+        body {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .option-card:not(.locked):hover {
+            transform: translateY(-2px);
+        }
+        /* Custom scrollbar untuk panel navigasi soal */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-primary-100 selection:text-primary-800">
+
+    <!-- ===================================================================== -->
+    <!-- TOP NAVIGATION BAR                                                    -->
+    <!-- ===================================================================== -->
+    <header id="main-navbar" class="glass-header sticky top-0 z-40 border-b border-slate-200/80 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="navigateTo('home')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-600 to-accent-600 flex items-center justify-center text-white shadow-md shadow-primary-500/25">
+                        <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-display font-extrabold text-xl tracking-tight bg-gradient-to-r from-primary-700 to-accent-600 bg-clip-text text-transparent">SmartExam</span>
+                            <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary-50 text-primary-700 border border-primary-200 rounded-full">CBT Pro</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 font-medium leading-none hidden sm:block">Online Examination System</p>
+                    </div>
+                </div>
+
+                <!-- Menu Navigasi Desktop & Tablet -->
+                <nav class="flex items-center gap-1 sm:gap-2 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+                    <button id="nav-home" onclick="navigateTo('home')" class="nav-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-primary-700 shadow-xs">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Beranda</span>
+                    </button>
+                    <button id="nav-history" onclick="navigateTo('history')" class="nav-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                        <span>Riwayat Nilai</span>
+                    </button>
+                    <button id="nav-admin" onclick="navigateTo('admin')" class="nav-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        <span>Panel Admin</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- TOAST NOTIFICATION CONTAINER                                          -->
+    <!-- ===================================================================== -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- ===================================================================== -->
+    <!-- MAIN CONTENT CONTAINER                                                -->
+    <!-- ===================================================================== -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- ================================================================= -->
+        <!-- VIEW 1: BERANDA / DASHBOARD UJIAN                                 -->
+        <!-- ================================================================= -->
+        <section id="view-home" class="animate-fade-in space-y-6">
+            <!-- Hero Banner & Statistik Ringkas -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Kartu Info Ujian Utama (2 Kolom) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <!-- Top Accent Bar -->
+                        <div class="h-2 bg-gradient-to-r from-primary-600 via-primary-500 to-accent-600"></div>
+                        <div class="p-6 sm:p-8">
+                            <div class="flex flex-wrap items-center gap-2 mb-4">
+                                <span id="home-exam-category" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">
+                                    <i data-lucide="dna" class="w-3.5 h-3.5"></i>
+                                    Biologi Sel
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-accent-50 text-accent-700 border border-accent-100">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                    Pembahasan Otomatis
+                                </span>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i data-lucide="shuffle" class="w-3.5 h-3.5"></i>
+                                    Acak Soal & Opsi
+                                </span>
+                            </div>
+
+                            <h1 id="home-exam-title" class="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
+                                Biologi Sel: Cell Signaling & Komunikasi Sel
+                            </h1>
+                            <p id="home-exam-desc" class="text-slate-600 text-sm sm:text-base leading-relaxed mb-6">
+                                Ujian evaluasi komprehensif mengenai mekanisme pensinyalan sel (Reception, Transduction, Response), reseptor permukaan membran (GPCR, kanal ion), reseptor intraseluler hormon steroid, sinapsis kimiawi & elektrik, serta komunikasi quorum sensing pada bakteri.
+                            </p>
+
+                            <!-- Grid Metrik Ujian -->
+                            <div class="grid grid-cols-3 gap-3 sm:gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200/70 mb-6">
+                                <div class="text-center sm:text-left sm:flex sm:items-center sm:gap-3">
+                                    <div class="w-10 h-10 mx-auto sm:mx-0 mb-1.5 sm:mb-0 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
+                                        <i data-lucide="file-question" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] sm:text-xs font-medium text-slate-500">Jumlah Soal</p>
+                                        <p id="home-total-questions" class="font-display font-bold text-base sm:text-lg text-slate-900">20 Soal</p>
+                                    </div>
+                                </div>
+                                <div class="text-center sm:text-left sm:flex sm:items-center sm:gap-3 border-x border-slate-200 px-2 sm:px-4">
+                                    <div class="w-10 h-10 mx-auto sm:mx-0 mb-1.5 sm:mb-0 rounded-xl bg-accent-100 text-accent-600 flex items-center justify-center shrink-0">
+                                        <i data-lucide="clock" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] sm:text-xs font-medium text-slate-500">Durasi Ujian</p>
+                                        <p id="home-exam-duration" class="font-display font-bold text-base sm:text-lg text-slate-900">30 Menit</p>
+                                    </div>
+                                </div>
+                                <div class="text-center sm:text-left sm:flex sm:items-center sm:gap-3">
+                                    <div class="w-10 h-10 mx-auto sm:mx-0 mb-1.5 sm:mb-0 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <i data-lucide="award" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-[11px] sm:text-xs font-medium text-slate-500">Batas Lulus</p>
+                                        <p id="home-passing-score" class="font-display font-bold text-base sm:text-lg text-slate-900">KKM 75</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pengaturan Cepat Durasi Sebelum Mulai -->
+                            <div class="mb-6">
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                                    Pilih / Sesuaikan Durasi Latihan:
+                                </label>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" onclick="setQuickDuration(15)" class="dur-preset-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:border-primary-400 transition-all">15 Menit</button>
+                                    <button type="button" onclick="setQuickDuration(30)" class="dur-preset-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-primary-600 bg-primary-50 text-primary-700 transition-all">30 Menit (Default)</button>
+                                    <button type="button" onclick="setQuickDuration(60)" class="dur-preset-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:border-primary-400 transition-all">60 Menit</button>
+                                    <div class="flex items-center gap-1.5 ml-auto sm:ml-2">
+                                        <input type="number" id="custom-duration-input" min="1" max="180" placeholder="Custom" class="w-20 px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        <button type="button" onclick="applyCustomDuration()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white hover:bg-slate-700 transition-all">Set</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Tombol Mulai Ujian -->
+                    <div class="px-6 sm:px-8 py-5 bg-slate-50/90 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 text-xs text-slate-500">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                            <span>Sistem penyimpanan progres otomatis & pengacakan soal aktif.</span>
+                        </div>
+                        <button onclick="startExam()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-display font-bold text-sm sm:text-base text-white bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 shadow-lg shadow-primary-600/25 hover:shadow-primary-600/40 transform hover:-translate-y-0.5 transition-all cursor-pointer">
+                            <span>Mulai Ujian Sekarang</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan: Petunjuk Pengerjaan & Ringkasan Statistik -->
+                <div class="space-y-6">
+                    <!-- Kartu Statistik Pengguna -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-display font-bold text-base text-slate-900 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-5 h-5 text-primary-600"></i>
+                                Performa Anda
+                            </h2>
+                            <button onclick="navigateTo('history')" class="text-xs font-semibold text-primary-600 hover:text-primary-700">Detail &rarr;</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2.5">
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                                <p class="text-[11px] font-medium text-slate-500 mb-0.5">Percobaan</p>
+                                <p id="home-stat-attempts" class="font-display font-extrabold text-xl text-slate-800">0</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100 text-center">
+                                <p class="text-[11px] font-medium text-emerald-700 mb-0.5">Tertinggi</p>
+                                <p id="home-stat-highest" class="font-display font-extrabold text-xl text-emerald-700">-</p>
+                            </div>
+                            <div class="p-3 rounded-xl bg-primary-50/70 border border-primary-100 text-center">
+                                <p class="text-[11px] font-medium text-primary-700 mb-0.5">Rata-rata</p>
+                                <p id="home-stat-average" class="font-display font-extrabold text-xl text-primary-700">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kartu Petunjuk Pengerjaan -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                        <h2 class="font-display font-bold text-base text-slate-900 flex items-center gap-2 mb-4">
+                            <i data-lucide="info" class="w-5 h-5 text-accent-600"></i>
+                            Petunjuk Pengerjaan Ujian
+                        </h2>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-600">
+                            <li class="flex items-start gap-2.5">
+                                <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                                <span>Urutan soal dan posisi pilihan jawaban (<strong>A–E</strong>) diacak secara otomatis di setiap percobaan.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                                <span>Pilih jawaban yang menurut Anda tepat, lalu klik tombol <strong>"Jawab"</strong> untuk mengunci jawaban dan memunculkan <strong>pembahasan lengkap</strong>.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                                <span>Gunakan tombol <strong>Sebelumnya</strong>, <strong>Selanjutnya</strong>, atau klik nomor pada panel navigasi tanpa kehilangan jawaban maupun mereset timer.</span>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
+                                <span>Peringatan akan muncul saat waktu tersisa <strong>5 menit</strong>. Jika waktu habis (00:00), ujian otomatis diselesaikan dan dinilai.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 2: SISTEM PENGERJAAN UJIAN (EXAM INTERFACE)                  -->
+        <!-- ================================================================= -->
+        <section id="view-exam" class="hidden animate-fade-in space-y-5">
+            <!-- Header Ujian Sticky (Progress & Countdown Timer) -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:px-6 sticky top-20 z-30">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h2 id="exam-header-title" class="font-display font-bold text-sm sm:text-base text-slate-900 truncate">
+                                Biologi Sel: Cell Signaling
+                            </h2>
+                            <div class="flex items-center gap-3 text-xs text-slate-500 mt-0.5">
+                                <span id="exam-progress-text" class="font-semibold text-primary-600">Terjawab: 0 / 20</span>
+                                <span>•</span>
+                                <span id="exam-kkm-badge">KKM: 75</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Countdown Timer Box -->
+                    <div id="timer-box" class="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-900 text-white shadow-sm transition-colors duration-300">
+                        <i data-lucide="timer" class="w-5 h-5 text-primary-400" id="timer-icon"></i>
+                        <div>
+                            <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold leading-none">Sisa Waktu</p>
+                            <p id="exam-timer-display" class="font-display font-extrabold text-lg sm:text-xl tracking-wider leading-tight">30:00</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Progress Bar -->
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden mt-3.5">
+                    <div id="exam-progress-bar" class="h-full bg-gradient-to-r from-primary-600 to-accent-600 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Grid Utama: Area Soal (Kiri) + Navigasi Nomor Soal (Kanan) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Kolom Kiri (8/12): Kartu Soal & Pembahasan -->
+                <div class="lg:col-span-8 space-y-5">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-8">
+                        <!-- Metadata Nomor Soal & Kategori -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-5 border-b border-slate-100">
+                            <div class="flex items-center gap-2.5">
+                                <span id="question-number-badge" class="px-3.5 py-1.5 rounded-xl bg-primary-600 text-white font-display font-bold text-xs sm:text-sm shadow-xs">
+                                    Soal No. 1
+                                </span>
+                                <span id="question-category-badge" class="px-3 py-1 rounded-lg bg-accent-50 text-accent-700 font-semibold text-xs border border-accent-100">
+                                    Biologi Sel
+                                </span>
+                            </div>
+                            <span id="question-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">
+                                Belum Dijawab
+                            </span>
+                        </div>
+
+                        <!-- Teks Pertanyaan -->
+                        <div class="mb-6">
+                            <p id="question-text" class="text-slate-900 font-medium text-base sm:text-lg leading-relaxed">
+                                Memuat pertanyaan...
+                            </p>
+                        </div>
+
+                        <!-- Daftar Pilihan Jawaban A, B, C, D, E -->
+                        <div id="options-container" class="space-y-3">
+                            <!-- Diisi secara dinamis oleh JavaScript -->
+                        </div>
+
+                        <!-- Tombol Aksi Jawab / Konfirmasi -->
+                        <div id="answer-action-bar" class="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                            <p class="text-xs text-slate-500 italic" id="answer-hint-text">
+                                Pilih salah satu opsi di atas, lalu klik tombol <strong>"Jawab"</strong> untuk melihat pembahasan.
+                            </p>
+                            <button id="btn-submit-answer" onclick="confirmCurrentAnswer()" disabled class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-display font-bold text-sm text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all cursor-pointer">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                <span>Jawab</span>
+                            </button>
+                        </div>
+
+                        <!-- Kotak Pembahasan Otomatis (Tampil setelah tombol "Jawab" ditekan) -->
+                        <div id="explanation-box" class="hidden mt-6 rounded-2xl border p-5 sm:p-6 animate-slide-up">
+                            <div class="flex items-start gap-3.5">
+                                <div id="explanation-icon-wrap" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                                    <i id="explanation-icon" data-lucide="check-circle" class="w-6 h-6"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                                        <h4 id="explanation-status-title" class="font-display font-extrabold text-base sm:text-lg">
+                                            Jawaban Anda Benar!
+                                        </h4>
+                                        <span id="explanation-correct-key" class="px-3 py-1 rounded-lg text-xs font-bold bg-white/80 border">
+                                            Kunci Jawaban: A
+                                        </span>
+                                    </div>
+                                    <div class="mt-3 pt-3 border-t border-black/10">
+                                        <p class="text-xs font-bold uppercase tracking-wider opacity-75 mb-1">Pembahasan Lengkap:</p>
+                                        <p id="explanation-text" class="text-sm leading-relaxed">
+                                            Penjelasan lengkap akan muncul di sini.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigasi Bawah: Sebelumnya & Selanjutnya / Soal Berikutnya -->
+                    <div class="flex items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <button id="btn-prev-question" onclick="prevQuestion()" class="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            <span>Sebelumnya</span>
+                        </button>
+
+                        <button id="btn-next-question" onclick="nextQuestion()" class="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-white bg-primary-600 hover:bg-primary-700 shadow-sm transition-all cursor-pointer">
+                            <span id="btn-next-label">Selanjutnya</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan (4/12): Panel Navigasi Nomor Soal -->
+                <div class="lg:col-span-4 space-y-5">
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-display font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                                <i data-lucide="grid" class="w-4 h-4 text-primary-600"></i>
+                                Navigasi Nomor Soal
+                            </h3>
+                            <span id="nav-answered-count" class="text-xs font-bold text-slate-500">0/20</span>
+                        </div>
+
+                        <!-- Grid Nomor Soal -->
+                        <div id="question-grid" class="grid grid-cols-5 gap-2 mb-5">
+                            <!-- Diisi dinamis oleh JS -->
+                        </div>
+
+                        <!-- Legenda Indikator Warna -->
+                        <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 text-[11px] font-medium text-slate-600">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-md bg-primary-600 inline-block"></span>
+                                <span>Sedang Dibuka</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-md bg-slate-100 border border-slate-300 inline-block"></span>
+                                <span>Belum Dijawab</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-md bg-emerald-500 inline-block"></span>
+                                <span>Dijawab Benar</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-3.5 h-3.5 rounded-md bg-rose-500 inline-block"></span>
+                                <span>Dijawab Salah</span>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Selesaikan Ujian -->
+                        <button onclick="openFinishModal()" class="w-full mt-5 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-display font-bold text-sm text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/20 transition-all cursor-pointer">
+                            <i data-lucide="flag" class="w-4 h-4"></i>
+                            <span>Selesaikan Ujian</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 3: HALAMAN HASIL & NILAI UJIAN                               -->
+        <!-- ================================================================= -->
+        <section id="view-result" class="hidden animate-fade-in space-y-6">
+            <!-- Kartu Ringkasan Hasil Utama -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div id="result-top-banner" class="h-2.5 bg-emerald-500"></div>
+                <div class="p-6 sm:p-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                        
+                        <!-- Skor Akhir & Status Lulus (5/12) -->
+                        <div class="lg:col-span-5 text-center lg:border-r lg:border-slate-100 lg:pr-8">
+                            <span id="result-status-badge" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 mb-4">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                LULUS UJIAN
+                            </span>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Nilai Akhir Anda</p>
+                            <div class="my-2 flex items-baseline justify-center gap-1">
+                                <span id="result-final-score" class="font-display font-extrabold text-6xl sm:text-7xl text-slate-900 tracking-tight">85</span>
+                                <span class="text-lg font-bold text-slate-400">/100</span>
+                            </div>
+                            <p id="result-exam-title" class="text-sm font-medium text-slate-600 mb-6">
+                                Biologi Sel: Cell Signaling & Komunikasi Sel
+                            </p>
+
+                            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                                <button onclick="startExam()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-display font-bold text-sm text-white bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 shadow-md shadow-primary-600/20 transition-all cursor-pointer">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                    <span>Coba Lagi</span>
+                                </button>
+                                <button onclick="navigateTo('history')" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
+                                    <i data-lucide="history" class="w-4 h-4"></i>
+                                    <span>Riwayat Nilai</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grafik Doughnut & Statistik Detail (7/12) -->
+                        <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+                            <!-- Chart Container -->
+                            <div class="relative w-48 h-48 mx-auto">
+                                <canvas id="resultDoughnutChart"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span class="text-[11px] font-semibold text-slate-400">Akurasi</span>
+                                    <span id="result-accuracy-center" class="font-display font-extrabold text-xl text-slate-800">85%</span>
+                                </div>
+                            </div>
+
+                            <!-- 5 Metrik Rinci -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-100">
+                                    <div class="flex items-center gap-1.5 text-emerald-700 text-xs font-semibold mb-1">
+                                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                                        <span>Jawaban Benar</span>
+                                    </div>
+                                    <p id="result-correct-count" class="font-display font-extrabold text-2xl text-emerald-800">17</p>
+                                </div>
+
+                                <div class="p-3.5 rounded-xl bg-rose-50/80 border border-rose-100">
+                                    <div class="flex items-center gap-1.5 text-rose-700 text-xs font-semibold mb-1">
+                                        <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                        <span>Jawaban Salah</span>
+                                    </div>
+                                    <p id="result-wrong-count" class="font-display font-extrabold text-2xl text-rose-800">3</p>
+                                </div>
+
+                                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                                    <div class="flex items-center gap-1.5 text-slate-600 text-xs font-semibold mb-1">
+                                        <i data-lucide="minus-circle" class="w-4 h-4"></i>
+                                        <span>Belum Dijawab</span>
+                                    </div>
+                                    <p id="result-unanswered-count" class="font-display font-extrabold text-2xl text-slate-800">0</p>
+                                </div>
+
+                                <div class="p-3.5 rounded-xl bg-primary-50/80 border border-primary-100">
+                                    <div class="flex items-center gap-1.5 text-primary-700 text-xs font-semibold mb-1">
+                                        <i data-lucide="clock" class="w-4 h-4"></i>
+                                        <span>Waktu Digunakan</span>
+                                    </div>
+                                    <p id="result-time-used" class="font-display font-extrabold text-lg sm:text-xl text-primary-800">12m 30d</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rekapitulasi & Pembahasan Lengkap Seluruh Soal -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                    <div>
+                        <h3 class="font-display font-bold text-lg sm:text-xl text-slate-900">Evaluasi & Pembahasan Setiap Soal</h3>
+                        <p class="text-xs sm:text-sm text-slate-500">Tinjau kembali jawaban Anda, kunci jawaban yang benar, beserta penjelasannya.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="filterResultReview('all')" class="res-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white">Semua</button>
+                        <button onclick="filterResultReview('correct')" class="res-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Benar</button>
+                        <button onclick="filterResultReview('wrong')" class="res-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Salah / Kosong</button>
+                    </div>
+                </div>
+
+                <div id="result-review-list" class="space-y-4">
+                    <!-- Diisi secara dinamis oleh JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 4: DASHBOARD RIWAYAT UJIAN                                   -->
+        <!-- ================================================================= -->
+        <section id="view-history" class="hidden animate-fade-in space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="font-display font-extrabold text-2xl text-slate-900">Riwayat & Analisis Nilai Ujian</h1>
+                    <p class="text-sm text-slate-500">Pantau perkembangan hasil belajar Anda dari setiap percobaan ujian.</p>
+                </div>
+                <button onclick="clearAllHistory()" id="btn-clear-history" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>Hapus Semua Riwayat</span>
+                </button>
+            </div>
+
+            <!-- 3 Kartu Ringkasan Statistik -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="layers" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Total Percobaan</p>
+                        <p id="hist-total-attempts" class="font-display font-extrabold text-2xl sm:text-3xl text-slate-900">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="trophy" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Nilai Tertinggi</p>
+                        <p id="hist-highest-score" class="font-display font-extrabold text-2xl sm:text-3xl text-emerald-600">-</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-accent-100 text-accent-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500">Rata-Rata Nilai</p>
+                        <p id="hist-average-score" class="font-display font-extrabold text-2xl sm:text-3xl text-accent-600">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafik Line Chart Perkembangan Nilai -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <h3 class="font-display font-bold text-base sm:text-lg text-slate-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-5 h-5 text-primary-600"></i>
+                    Grafik Perkembangan Nilai
+                </h3>
+                <div class="h-64 sm:h-72 w-full">
+                    <canvas id="historyLineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabel Daftar Riwayat Percobaan -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-display font-bold text-base text-slate-900">Daftar Riwayat Percobaan</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                                <th class="py-3.5 px-5">Percobaan</th>
+                                <th class="py-3.5 px-5">Tanggal & Waktu</th>
+                                <th class="py-3.5 px-5">Judul Ujian</th>
+                                <th class="py-3.5 px-5 text-center">Rincian (B/S/K)</th>
+                                <th class="py-3.5 px-5 text-center">Durasi</th>
+                                <th class="py-3.5 px-5 text-center">Nilai</th>
+                                <th class="py-3.5 px-5 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Diisi secara dinamis oleh JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 5: PANEL ADMIN (MANAJEMEN SOAL & PENGATURAN UJIAN)           -->
+        <!-- ================================================================= -->
+        <section id="view-admin" class="hidden animate-fade-in space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="font-display font-extrabold text-2xl text-slate-900">Panel Admin SmartExam</h1>
+                    <p class="text-sm text-slate-500">Kelola pengaturan ujian, kategori, dan bank soal beserta pembahasan.</p>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button onclick="resetDefaultQuestions()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-xs transition-all cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>Reset 20 Soal Default</span>
+                    </button>
+                    <button onclick="openQuestionModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-primary-600 to-accent-600 hover:from-primary-700 hover:to-accent-700 shadow-md shadow-primary-600/20 transition-all cursor-pointer">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>Tambah Soal Baru</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Pengaturan Ujian & Kategori -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Form Pengaturan Ujian (2/3) -->
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                    <h3 class="font-display font-bold text-base sm:text-lg text-slate-900 mb-4 flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-primary-600"></i>
+                        Pengaturan Umum Ujian
+                    </h3>
+                    <form id="admin-settings-form" onsubmit="saveExamSettings(event)" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Judul Ujian</label>
+                                <input type="text" id="admin-exam-title" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Utama Ujian</label>
+                                <select id="admin-exam-category" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <!-- Diisi dinamis -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1.5">Deskripsi Ujian</label>
+                            <textarea id="admin-exam-desc" rows="2" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Durasi Ujian (Menit)</label>
+                                <input type="number" id="admin-exam-duration" min="1" max="300" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Batas Nilai Kelulusan / KKM (0–100)</label>
+                                <input type="number" id="admin-passing-score" min="0" max="100" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex justify-end">
+                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-white bg-primary-600 hover:bg-primary-700 shadow-sm transition-all cursor-pointer">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>Simpan Pengaturan</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Manajemen Kategori Ujian (1/3) -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-display font-bold text-base sm:text-lg text-slate-900 mb-4 flex items-center gap-2">
+                            <i data-lucide="tags" class="w-5 h-5 text-accent-600"></i>
+                            Kelola Kategori
+                        </h3>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="new-category-input" placeholder="Nama kategori baru..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <button type="button" onclick="addCategory()" class="px-3.5 py-2 rounded-xl bg-accent-600 hover:bg-accent-700 text-white font-semibold text-xs transition-all cursor-pointer">Tambah</button>
+                        </div>
+                        <div id="admin-category-list" class="flex flex-wrap gap-2 max-h-44 overflow-y-auto">
+                            <!-- Diisi dinamis -->
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-4 pt-3 border-t border-slate-100">
+                        Kategori digunakan untuk mengelompokkan soal pada bank soal ujian.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Manajemen Bank Soal -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <h3 class="font-display font-bold text-base sm:text-lg text-slate-900">Daftar Bank Soal</h3>
+                        <span id="admin-question-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-100 text-primary-700">20 Soal</span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                        <div class="relative flex-1 sm:w-64">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="admin-search-input" oninput="renderAdminQuestionList()" placeholder="Cari pertanyaan..." class="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <select id="admin-filter-category" onchange="renderAdminQuestionList()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="ALL">Semua Kategori</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="admin-question-list" class="space-y-3">
+                    <!-- Diisi secara dinamis oleh JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- FOOTER                                                                -->
+    <!-- ===================================================================== -->
+    <footer class="bg-white border-t border-slate-200/80 py-5 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p class="font-medium">&copy; 2026 <span class="font-bold text-slate-700">SmartExam – Online Examination System</span>. All rights reserved.</p>
+            <p>Platform Evaluasi & Simulasi Ujian Interaktif Berbasis CBT</p>
+        </div>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: KONFIRMASI SELESAI UJIAN                                     -->
+    <!-- ===================================================================== -->
+    <div id="modal-finish-exam" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-slide-up">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mb-4">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-display font-extrabold text-xl text-slate-900 mb-2">Selesaikan Ujian Sekarang?</h3>
+            <p id="finish-modal-message" class="text-sm text-slate-600 leading-relaxed mb-6">
+                Apakah Anda yakin ingin mengakhiri ujian dan melihat hasil penilaian?
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeFinishModal()" class="px-4 py-2.5 rounded-xl font-semibold text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
+                    Kembali Mengerjakan
+                </button>
+                <button onclick="finishExam()" class="px-5 py-2.5 rounded-xl font-display font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer">
+                    Ya, Selesaikan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: TAMBAH / EDIT SOAL (ADMIN PANEL)                             -->
+    <!-- ===================================================================== -->
+    <div id="modal-question-form" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-8 animate-slide-up">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+                <h3 id="question-modal-title" class="font-display font-extrabold text-xl text-slate-900">Tambah Soal Baru</h3>
+                <button onclick="closeQuestionModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="question-editor-form" onsubmit="saveQuestionFromModal(event)" class="space-y-4">
+                <input type="hidden" id="edit-question-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kategori Soal</label>
+                        <select id="modal-q-category" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <!-- Diisi dinamis -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Kunci Jawaban Benar</label>
+                        <select id="modal-q-correct" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white font-semibold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="0">Pilihan A</option>
+                            <option value="1">Pilihan B</option>
+                            <option value="2">Pilihan C</option>
+                            <option value="3">Pilihan D</option>
+                            <option value="4">Pilihan E</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Teks Pertanyaan</label>
+                    <textarea id="modal-q-text" rows="3" required placeholder="Tuliskan pertanyaan soal secara lengkap..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+
+                <!-- Pilihan A - E -->
+                <div class="space-y-2.5">
+                    <label class="block text-xs font-semibold text-slate-700">Pilihan Jawaban (A – E)</label>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center text-slate-700 shrink-0">A</span>
+                        <input type="text" id="modal-q-opt-0" required placeholder="Teks pilihan A" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center text-slate-700 shrink-0">B</span>
+                        <input type="text" id="modal-q-opt-1" required placeholder="Teks pilihan B" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center text-slate-700 shrink-0">C</span>
+                        <input type="text" id="modal-q-opt-2" required placeholder="Teks pilihan C" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center text-slate-700 shrink-0">D</span>
+                        <input type="text" id="modal-q-opt-3" required placeholder="Teks pilihan D" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-8 h-8 rounded-lg bg-slate-100 font-bold text-xs flex items-center justify-center text-slate-700 shrink-0">E</span>
+                        <input type="text" id="modal-q-opt-4" required placeholder="Teks pilihan E" class="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pembahasan / Penjelasan Jawaban</label>
+                    <textarea id="modal-q-explanation" rows="3" required placeholder="Tuliskan penjelasan lengkap mengapa jawaban tersebut benar..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeQuestionModal()" class="px-4 py-2.5 rounded-xl font-semibold text-sm text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl font-display font-bold text-sm text-white bg-primary-600 hover:bg-primary-700 shadow-sm transition-all cursor-pointer">
+                        Simpan Soal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT LOGIC & DATA BANK SOAL                                     -->
+    <!-- ===================================================================== -->
+    <script>
+        // =====================================================================
+        // 1. BANK SOAL DEFAULT (20 SOAL LENGKAP BIOLOGI SEL: CELL SIGNALING)
+        // =====================================================================
+        const DEFAULT_QUESTIONS = [
+            {
+                id: 'q1',
+                category: 'Evolusi & Dasar Signaling',
+                question: 'Berdasarkan kajian fosil, organisme multiseluler muncul sekitar 2,5 milyar tahun yang lalu (sekitar 1 milyar tahun setelah organisme uniseluler). Alasan utama organisme multiseluler memerlukan waktu evolusi yang lama tersebut dalam konteks komunikasi sel adalah...',
+                options: [
+                    'Untuk mengembangkan mekanisme pengaturan komunikasi antar sel agar dapat berfungsi terkoordinasi sebagai satu organisme utuh',
+                    'Untuk menghilangkan ketergantungan sel terhadap molekul sinyal hidrofobik dari lingkungan',
+                    'Untuk menggantikan seluruh reseptor intraseluler dengan reseptor terikat kanal ion',
+                    'Untuk mencegah terjadinya proses apoptosis selama fase perkembangan embrio',
+                    'Untuk mempercepat laju difusi hormon steroid di dalam cairan ekstraseluler'
+                ],
+                correctIndex: 0,
+                explanation: 'Organisme multiseluler memerlukan waktu evolusi yang panjang untuk mengembangkan mekanisme komunikasi antar sel yang kompleks agar setiap sel dapat mengetahui posisi, peran khas, dan berperilaku secara terkoordinasi sebagai satu organisme utuh.'
+            },
+            {
+                id: 'q2',
+                category: 'Evolusi & Dasar Signaling',
+                question: 'Pada khamir (Saccharomyces cerevisiae), komunikasi antar sel uniseluler terjadi selama proses perkawinan (mating). Mekanisme yang terjadi saat sel tipe a bertemu dengan sel tipe α adalah...',
+                options: [
+                    'Kedua sel saling bertukar faktor perkawinan (a factor dan α factor) yang berikatan dengan reseptor spesifik masing-masing sehingga memicu fusi sel',
+                    'Sel tipe a mengirimkan impuls listrik melalui gap junction menuju sel tipe α',
+                    'Sel tipe α mensekresikan hormon steroid yang berdifusi langsung ke nukleus sel tipe a',
+                    'Kedua sel membentuk biofilm melalui mekanisme quorum sensing berbasis peptida',
+                    'Sel tipe a mendegradasi reseptor sel tipe α menggunakan enzim protein fosfatase'
+                ],
+                correctIndex: 0,
+                explanation: 'Sel khamir tipe a dan α masing-masing mensekresikan faktor perkawinan (mating factor) yang berikatan dengan reseptor spesifik pada permukaan sel pasangannya, menginduksi perubahan seluler hingga terjadi fusi membentuk sel diploid a/α.'
+            },
+            {
+                id: 'q3',
+                category: 'Tahapan Cell Signaling',
+                question: 'Urutan tahapan utama yang terjadi dalam proses cell signaling mulai dari diterimanya sinyal hingga munculnya perubahan aktivitas sel adalah...',
+                options: [
+                    'Reception → Transduction → Response',
+                    'Transduction → Reception → Response',
+                    'Response → Reception → Transduction',
+                    'Reception → Response → Transduction',
+                    'Secretion → Diffusion → Transcription'
+                ],
+                correctIndex: 0,
+                explanation: 'Tahapan cell signaling terdiri dari 3 tahap berurutan: (1) Reception (pengenalan molekul ligan oleh protein reseptor spesifik), (2) Transduction (kaskade perubahan konformasi protein relai intraseluler), dan (3) Response (perubahan perilaku/aktivitas seluler).'
+            },
+            {
+                id: 'q4',
+                category: 'Tahapan Cell Signaling',
+                question: 'Pada jalur pensinyalan adrenalin dalam sel hati atau otot, ikatan satu molekul adrenalin pada reseptornya dapat menghasilkan jutaan molekul glukosa melalui aktivasi bertahap protein G, adenilat siklase, protein kinase A, fosforilase kinase, dan glikogen fosforilase. Fenomena ini menunjukkan karakteristik transduksi sinyal berupa...',
+                options: [
+                    'Amplifikasi sinyal melalui reaksi kaskade',
+                    'Inhibisi umpan balik negatif secara langsung',
+                    'Transpor aktif sekunder melewati membran plasma',
+                    'Pensinyalan jukstakrin melalui kontak langsung antar membran',
+                    'Degradasi cepat second messenger oleh fosfodiesterase'
+                ],
+                correctIndex: 0,
+                explanation: 'Reaksi kaskade (berjenjang) pada jalur transduksi sinyal memungkinkan amplifikasi (pelipatgandaan) sinyal secara masif dari konsentrasi awal ligan yang sangat kecil hingga menghasilkan respons fisiologis seluler yang besar.'
+            },
+            {
+                id: 'q5',
+                category: 'Tipe Pensinyalan Jarak Dekat & Jauh',
+                question: 'Perbedaan mendasar antara pensinyalan parakrin dan pensinyalan endokrin terletak pada...',
+                options: [
+                    'Jarak tempuh molekul sinyal dan keterlibatan sistem pembuluh darah dalam transportasi sinyal',
+                    'Jenis reseptor yang hanya berada di dalam nukleus pada pensinyalan parakrin',
+                    'Kemampuan pensinyalan endokrin untuk bekerja tanpa melibatkan protein reseptor pada sel target',
+                    'Kecepatan transmisi yang selalu lebih cepat pada pensinyalan endokrin dibanding sinaptik',
+                    'Sifat kimiawi ligan yang selalu berupa gas pada pensinyalan endokrin'
+                ],
+                correctIndex: 0,
+                explanation: 'Pensinyalan parakrin menggunakan mediator lokal yang berdifusi pada jarak dekat ke sel target di sekitarnya, sedangkan pensinyalan endokrin mensekresikan hormon ke dalam aliran pembuluh darah untuk menjangkau sel target yang letaknya jauh.'
+            },
+            {
+                id: 'q6',
+                category: 'Tipe Pensinyalan Jarak Dekat & Jauh',
+                question: 'Pada sistem imun, sel T helper (TH) yang telah teraktivasi mensekresikan sitokin Interleukin-2 (IL-2) yang kemudian berikatan dengan reseptor IL-2 pada permukaan sel T helper itu sendiri untuk memicu proliferasi. Mekanisme komunikasi sel tersebut merupakan contoh dari pensinyalan...',
+                options: [
+                    'Autokrin',
+                    'Endokrin',
+                    'Sinaptik',
+                    'Gap junction',
+                    'Neuroendokrin'
+                ],
+                correctIndex: 0,
+                explanation: 'Pensinyalan autokrin terjadi ketika sel mensekresikan molekul sinyal yang berikatan kembali dengan reseptor pada sel itu sendiri (atau sel sejenis di sekitarnya), seperti pada stimulasi IL-2 oleh sel T helper dan regulasi miostatin (MSTN).'
+            },
+            {
+                id: 'q7',
+                category: 'Tipe Pensinyalan Jarak Dekat & Jauh',
+                question: 'Sel inang yang terinfeksi virus akan memproduksi dan mensekresikan protein interferon ke lingkungan sekitarnya untuk merangsang sel-sel tetangga mengaktifkan gen protein antivirus. Mekanisme perlindungan ini merupakan contoh nyata dari pensinyalan...',
+                options: [
+                    'Parakrin',
+                    'Endokrin',
+                    'Sinaptik',
+                    'Otokrin-jukstakrin',
+                    'Elektrikal sinapsis'
+                ],
+                correctIndex: 0,
+                explanation: 'Interferon bertindak sebagai mediator lokal yang dilepaskan oleh sel yang terinfeksi virus untuk memengaruhi sel-sel target di dekatnya (pensinyalan parakrin) agar meningkatkan pertahanan dan memproduksi protein antivirus.'
+            },
+            {
+                id: 'q8',
+                category: 'Sinapsis & Neurotransmiter',
+                question: 'Pernyataan yang paling tepat mengenai karakteristik transmisi sinyal pada sinapsis kimiawi (chemical synapse) adalah...',
+                options: [
+                    'Neurotransmiter dilepaskan ke celah sinapsis sempit (< 100 nm) dalam kadar tinggi dan berikatan dengan reseptor berafinitas rendah agar mudah lepas dan segera didegradasi',
+                    'Neurotransmiter diencerkan oleh sirkulasi darah sehingga membutuhkan reseptor berafinitas sangat tinggi',
+                    'Laju transmisi impuls saraf berlangsung lambat dalam hitungan jam karena melibatkan transkripsi gen',
+                    'Jarak antara membran pra-sinapsis dan pasca-sinapsis lebih dari 1 milimeter',
+                    'Molekul neurotransmiter tidak pernah didegradasi setelah berikatan dengan reseptor pasca-sinapsis'
+                ],
+                correctIndex: 0,
+                explanation: 'Pada celah sinapsis yang sangat sempit (< 100 nm), konsentrasi neurotransmiter sangat tinggi karena tidak terencerkan cairan tubuh, sehingga berikatan dengan reseptor berafinitas rendah agar sinyal cepat berakhir (mudah lepas dan didegradasi dalam hitungan milidetik).'
+            },
+            {
+                id: 'q9',
+                category: 'Sinapsis & Neurotransmiter',
+                question: 'Senyawa racun curare dan α-bungarotoksin sering dipelajari dalam neurofisiologi karena kemampuannya menyebabkan kelumpuhan otot. Mekanisme kerja kedua bahan tersebut pada sinapsis neuromuskular adalah...',
+                options: [
+                    'Memblokir reseptor asetilkolin tipe nikotinik pada membran pasca-sinapsis',
+                    'Mendegradasi protein synaptobrevin sehingga vesikula sinaptik gagal berfusi',
+                    'Menghambat aktivitas enzim monoamine oxidase (MAO) di celah sinapsis',
+                    'Meningkatkan sensitivitas reseptor GABA terhadap ion klorida',
+                    'Memicu pembukaan kanal kalsium berpintu voltase secara terus-menerus'
+                ],
+                correctIndex: 0,
+                explanation: 'Curare dan α-bungarotoksin bekerja sebagai antagonis kompetitif yang memblokir reseptor asetilkolin nikotinik (bukan muskarinik) pada membran otot pasca-sinapsis, sehingga mencegah depolarisasi otot dan menyebabkan kelumpuhan.'
+            },
+            {
+                id: 'q10',
+                category: 'Sinapsis & Neurotransmiter',
+                question: 'Toksin Botulinum-B bekerja pada ujung saraf presinaptik dengan cara mendegradasi protein synaptobrevin. Dampak langsung dari mekanisme tersebut terhadap komunikasi sel saraf adalah...',
+                options: [
+                    'Vesikula sinaptik tidak dapat berfusi dengan membran presinaptik sehingga neurotransmiter gagal dilepaskan',
+                    'Kanal ion natrium pada membran pasca-sinapsis terbuka secara permanen',
+                    'Enzim asetilkolinesterase bekerja dua kali lebih cepat mendegradasi asetilkolin',
+                    'Reseptor dopamin D1 dan D2 mengalami fosforilasi berlebih',
+                    'Potensial aksi merambat mundur dari dendrit menuju akson terminal'
+                ],
+                correctIndex: 0,
+                explanation: 'Synaptobrevin adalah protein SNARE pada membran vesikula yang berperan penting dalam fusi vesikula sinaptik dengan membran presinaptik. Degradasinya oleh Botulinum-B menghambat eksositosis pelepasan neurotransmiter.'
+            },
+            {
+                id: 'q11',
+                category: 'Tipe Pensinyalan Jarak Dekat & Jauh',
+                question: 'Hormon antidiuretik (ADH) dan oksitosin dilepaskan ke dalam aliran darah melalui neurohipofisis, namun kedua hormon tersebut sebenarnya disintesis oleh...',
+                options: [
+                    'Hipotalamus',
+                    'Adenohipofisis',
+                    'Korteks adrenal',
+                    'Kelenjar tiroid',
+                    'Pulau Langerhans pankreas'
+                ],
+                correctIndex: 0,
+                explanation: 'Neuron neurosekretori di hipotalamus mensintesis ADH (vasopresin) dan oksitosin yang kemudian diangkut melalui akson dan disekresikan ke aliran darah melalui neurohipofisis (hipofisis posterior).'
+            },
+            {
+                id: 'q12',
+                category: 'Reseptor Permukaan & Intraseluler',
+                question: 'Perbedaan karakteristik utama antara molekul sinyal hidrofilik (misalnya peptida/katekolamin) dan molekul sinyal hidrofobik kecil (misalnya hormon steroid dan tiroid) adalah...',
+                options: [
+                    'Molekul sinyal hidrofobik berikatan dengan reseptor intraseluler dan bertahan jauh lebih lama (jam hingga hari) di dalam darah dibanding molekul hidrofilik',
+                    'Molekul sinyal hidrofilik mampu menembus lapisan ganda fosfolipid membran plasma tanpa bantuan reseptor permukaan',
+                    'Hormon steroid tidak membutuhkan protein pembawa (carrier protein) saat ditransportasikan di dalam aliran darah',
+                    'Neurotransmiter dan mediator lokal bertahan di cairan jaringan selama beberapa hari sebelum didegradasi',
+                    'Molekul sinyal hidrofobik selalu bekerja dengan membuka kanal ion berpintu ligan di membran plasma'
+                ],
+                correctIndex: 0,
+                explanation: 'Molekul sinyal hidrofobik kecil dapat menembus membran plasma untuk berikatan dengan reseptor intraseluler dan bertahan lama di sirkulasi darah dengan bantuan protein pembawa (steroid: beberapa jam; tiroid: beberapa hari), sedangkan sinyal hidrofilik bekerja di permukaan sel dan cepat didegradasi.'
+            },
+            {
+                id: 'q13',
+                category: 'Reseptor Permukaan & Intraseluler',
+                question: 'Urutan mekanisme kerja hormon steroid setelah memasuki sitoplasma sel target hingga menghasilkan protein baru adalah...',
+                options: [
+                    'Berikatan dengan kompleks reseptor-chaperonin → pelepasan chaperones → fosforilasi kompleks hormon-reseptor → pengikatan pada DNA → transkripsi mRNA → translasi',
+                    'Berikatan dengan GPCR → aktivasi adenilat siklase → peningkatan cAMP → aktivasi PKA → translasi di ribosom',
+                    'Berikatan dengan kanal ion Na+ → depolarisasi membran → aktivasi protein kinase C → transkripsi mRNA',
+                    'Berikatan dengan reseptor tirosin kinase → dimerisasi reseptor → autofosforilasi → degradasi kromatin',
+                    'Berikatan dengan protein G trimerik → pelepasan subunit βγ → pembukaan pori nukleus'
+                ],
+                correctIndex: 0,
+                explanation: 'Hormon steroid berdifusi menembus membran plasma, berikatan dengan reseptor intraseluler yang awalnya terikat protein chaperonin. Setelah chaperone terlepas dan kompleks mengalami fosforilasi, kompleks hormon-reseptor masuk ke nukleus dan berikatan dengan DNA untuk mengatur transkripsi mRNA yang selanjutnya ditranslasi menjadi protein.'
+            },
+            {
+                id: 'q14',
+                category: 'Reseptor Permukaan & Intraseluler',
+                question: 'Pada reseptor terikat protein G (G-Protein-Linked Receptors / GPCR), molekul protein target di membran plasma yang secara langsung diaktivasi oleh subunit α-GTP atau kompleks βγ adalah...',
+                options: [
+                    'Enzim penghasil second messenger (seperti adenilat siklase/fosfolipase C) atau kanal ion',
+                    'Enzim RNA polimerase II di dalam nukleus',
+                    'Protein histon pada struktur kromatin',
+                    'Ribosom subunit besar pada retikulum endoplasma kasar',
+                    'Protein koneksin penyusun struktur gap junction'
+                ],
+                correctIndex: 0,
+                explanation: 'Protein G trimerik yang teraktivasi (mengikat GTP) akan berdisosiasi menjadi subunit α-GTP dan kompleks βγ yang selanjutnya berinteraksi dengan protein target di membran plasma berupa enzim (penghasil second messenger) atau kanal ion.'
+            },
+            {
+                id: 'q15',
+                category: 'Reseptor Permukaan & Intraseluler',
+                question: 'Asetilkolin dapat menimbulkan respons fisiologis yang berbeda pada dua jenis sel target yang berbeda: memperlambat laju kontraksi pada sel otot jantung, tetapi merangsang sekresi pada sel kelenjar ludah. Penyebab utama perbedaan respons tersebut adalah...',
+                options: [
+                    'Perbedaan jenis protein reseptor dan/atau jalur protein intraseluler yang dimiliki oleh masing-masing sel target',
+                    'Perbedaan rumus kimia molekul asetilkolin yang disekresikan ke jantung dan kelenjar ludah',
+                    'Asetilkolin bertindak sebagai hormon steroid di jantung dan sebagai neurotransmiter di kelenjar ludah',
+                    'Sel otot jantung tidak memiliki membran plasma sehingga asetilkolin langsung masuk ke mitokondria',
+                    'Sel kelenjar ludah mendegradasi asetilkolin sebelum berikatan dengan reseptor'
+                ],
+                correctIndex: 0,
+                explanation: 'Molekul sinyal yang sama (asetilkolin) dapat memicu respons berbeda pada sel target yang berbeda karena setiap jenis sel memiliki set reseptor, protein relai intraseluler, dan protein efektor yang khas.'
+            },
+            {
+                id: 'q16',
+                category: 'Tahapan Cell Signaling',
+                question: 'Dalam kaskade fosforilasi yang melibatkan enzim-enzim pensinyalan intraseluler, peran utama dari enzim Protein Kinase dan Protein Fosfatase secara berturut-turut adalah...',
+                options: [
+                    'Memindahkan gugus fosfat dari ATP ke protein target (fosforilasi) dan melepaskan gugus fosfat anorganik dari protein (defosforilasi)',
+                    'Mensintesis ATP dari ADP dan memecah cAMP menjadi AMP',
+                    'Memutus ikatan peptida protein reseptor dan menyambungkan rantai DNA',
+                    'Mengubah GTP menjadi GDP dan mengangkut ion Ca2+ keluar sel',
+                    'Membentuk kompleks chaperonin dan mendegradasi hormon steroid'
+                ],
+                correctIndex: 0,
+                explanation: 'Protein kinase (seperti serine/threonine kinase dan tyrosine kinase) mengkatalisis transfer gugus fosfat dari ATP ke protein target, sedangkan protein fosfatase membalikkan proses tersebut dengan membuang gugus fosfat (Pi) untuk menginaktivasi/mengatur sinyal.'
+            },
+            {
+                id: 'q17',
+                category: 'Tipe Pensinyalan Jarak Dekat & Jauh',
+                question: 'Makrofag atau neutrofil dapat mengenali dan memfagositosis bakteri yang telah diselubungi oleh antibodi IgG melalui pengikatan wilayah Fc antibodi dengan reseptor Fc di permukaan fagosit. Mekanisme ini tergolong ke dalam kategori...',
+                options: [
+                    'Cell signaling melalui molekul yang terikat pada membran plasma (plasma-membrane-bound molecules)',
+                    'Cell signaling endokrin jarak jauh',
+                    'Cell signaling melalui gas terlarut seperti Nitric Oxide',
+                    'Transduksi sinyal melalui reseptor intraseluler sitoplasmik',
+                    'Quorum sensing antar sel prokariotik dan eukariotik'
+                ],
+                correctIndex: 0,
+                explanation: 'Interaksi antara antibodi IgG yang menempel pada permukaan bakteri dengan reseptor Fc pada membran plasma makrofag memerlukan kontak fisik langsung antar permukaan sel, sehingga termasuk pensinyalan melalui molekul terikat membran plasma.'
+            },
+            {
+                id: 'q18',
+                category: 'Sinapsis & Neurotransmiter',
+                question: 'Pada sinapsis elektrik (electrical synapse), sinyal listrik berupa aliran ion dapat berpindah secara langsung dan sangat cepat dari neuron presinaptik ke neuron pascasinaptik melalui saluran antar sel yang disebut...',
+                options: [
+                    'Gap junction yang tersusun atas protein konekson (connexins)',
+                    'Celah sinapsis selebar 100 nm yang berisi asetilkolinesterase',
+                    'Reseptor tirosin kinase lintas membran',
+                    'Kompleks antibodi IgG dan reseptor Fc',
+                    'Vesikula eksositosis yang mengandung epinefrin'
+                ],
+                correctIndex: 0,
+                explanation: 'Gap junction menghubungkan sitoplasma dua sel bersebelahan secara langsung melalui saluran pori hidrofilik yang dibentuk oleh subunit protein connexins (membentuk connexon), memungkinkan pertukaran ion dan sinyal kecil secara instan.'
+            },
+            {
+                id: 'q19',
+                category: 'Quorum Sensing & Sinyal Gas',
+                question: 'Gas Nitric Oxide (NO) berperan penting sebagai intercellular messenger dalam mengatur vasodilatasi pembuluh darah. Mekanisme kerja NO yang diproduksi oleh sel endotel pembuluh darah terhadap sel otot polos di sekitarnya adalah...',
+                options: [
+                    'Berdifusi masuk ke sel otot polos dan mengaktivasi enzim Guanylyl Cyclase (GC) untuk mengubah GTP menjadi cGMP sehingga otot polos berelaksasi',
+                    'Berikatan dengan reseptor permukaan sel otot polos untuk menghambat produksi cGMP',
+                    'Memicu agregasi trombosit dan meningkatkan adhesi leukosit pada dinding pembuluh darah',
+                    'Menghambat enzim Nitric Oxide Synthase (NOS) sehingga asam amino L-arginin menumpuk',
+                    'Menginduksi kontraksi otot polos pembuluh darah melalui aktivasi kanal natrium'
+                ],
+                correctIndex: 0,
+                explanation: 'NO disintesis dari L-arginin oleh enzim NOS di sel endotel, lalu berdifusi cepat melewati membran sel otot polos dan mengaktifkan enzim guanylyl cyclase (GC) untuk memproduksi cGMP, yang memicu relaksasi otot polos (vasodilatasi).'
+            },
+            {
+                id: 'q20',
+                category: 'Quorum Sensing & Sinyal Gas',
+                question: 'Pada bakteri gram negatif seperti Vibrio fischeri, ekspresi gen luxI/luxR yang menghasilkan fenotipe bioluminesensi hanya terjadi ketika kepadatan populasi bakteri sudah tinggi. Mekanisme komunikasi berbasis kepadatan populasi ini beserta molekul sinyalnya adalah...',
+                options: [
+                    'Quorum sensing menggunakan molekul autoinducer berupa Acyl Homoserine Lactone (AHL)',
+                    'Pensinyalan endokrin menggunakan hormon adrenalin dan glukagon',
+                    'Pensinyalan sinaptik menggunakan neurotransmiter glutamat',
+                    'Fagositosis yang diperantarai oleh autoinducing peptide (AIP)',
+                    'Transduksi sinyal menggunakan gas Nitric Oxide dari siklus urea'
+                ],
+                correctIndex: 0,
+                explanation: 'Quorum sensing memungkinkan bakteri mengoordinasikan ekspresi gen berdasarkan kepadatan populasi. Pada bakteri gram negatif seperti Vibrio fischeri, molekul autoinducer yang digunakan adalah Acyl Homoserine Lactone (AHL) yang berikatan dengan protein regulator LuxR.'
+            }
+        ];
+
+        const DEFAULT_SETTINGS = {
+            title: 'Biologi Sel: Cell Signaling & Komunikasi Sel',
+            category: 'Biologi Sel',
+            description: 'Ujian evaluasi komprehensif mengenai mekanisme pensinyalan sel (Reception, Transduction, Response), reseptor permukaan membran (GPCR, kanal ion), reseptor intraseluler hormon steroid, sinapsis kimiawi & elektrik, serta komunikasi quorum sensing pada bakteri.',
+            durationMinutes: 30,
+            passingScore: 75,
+            categories: [
+                'Biologi Sel',
+                'Evolusi & Dasar Signaling',
+                'Tahapan Cell Signaling',
+                'Tipe Pensinyalan Jarak Dekat & Jauh',
+                'Sinapsis & Neurotransmiter',
+                'Reseptor Permukaan & Intraseluler',
+                'Quorum Sensing & Sinyal Gas'
+            ]
+        };
+
+        // =====================================================================
+        // 2. STATE APLIKASI & STORAGE KEYS
+        // =====================================================================
+        const STORAGE_KEYS = {
+            QUESTIONS: 'smartexam_questions_v1',
+            SETTINGS: 'smartexam_settings_v1',
+            HISTORY: 'smartexam_history_v1'
+        };
+
+        let bankQuestions = [];
+        let examSettings = {};
+        let examHistory = [];
+
+        // State Sesi Ujian Aktif
+        let examSession = {
+            isActive: false,
+            questions: [],         // Array soal yang sudah diacak + opsi yang sudah diacak
+            currentIndex: 0,       // Indeks soal yang sedang dibuka (0 .. N-1)
+            userSelections: [],    // Indeks opsi yang sedang dipilih user (sebelum dikunci/Jawab)
+            lockedAnswers: [],     // Indeks opsi yang sudah dikunci dengan tombol "Jawab" (null jika belum)
+            totalDurationSec: 1800,
+            remainingSec: 1800,
+            timerInterval: null,
+            fiveMinWarned: false,
+            startTime: null
+        };
+
+        // Chart Instances
+        let resultChartInstance = null;
+        let historyChartInstance = null;
+        let lastCompletedResult = null;
+
+        // =====================================================================
+        // 3. INISIALISASI DATA & LOCALSTORAGE
+        // =====================================================================
+        function loadAppData() {
+            try {
+                const savedQuestions = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
+                bankQuestions = savedQuestions ? JSON.parse(savedQuestions) : JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                if (!Array.isArray(bankQuestions) || bankQuestions.length === 0) {
+                    bankQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                }
+
+                const savedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+                examSettings = savedSettings ? { ...DEFAULT_SETTINGS, ...JSON.parse(savedSettings) } : { ...DEFAULT_SETTINGS };
+
+                const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+                examHistory = savedHistory ? JSON.parse(savedHistory) : [];
+            } catch (err) {
+                console.error('Error loading localStorage:', err);
+                bankQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                examSettings = { ...DEFAULT_SETTINGS };
+                examHistory = [];
+            }
+            saveAppData();
+        }
+
+        function saveAppData() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(bankQuestions));
+                localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(examSettings));
+                localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(examHistory));
+            } catch (err) {
+                console.error('Error saving to localStorage:', err);
+            }
+        }
+
+        // =====================================================================
+        // 4. NAVIGASI ANTAR HALAMAN (SPA ROUTING)
+        // =====================================================================
+        function navigateTo(viewName) {
+            // Jika ujian sedang berlangsung dan user mencoba pindah tab navbar
+            if (examSession.isActive && viewName !== 'exam') {
+                showToast('Selesaikan ujian terlebih dahulu atau klik tombol "Selesaikan Ujian".', 'warning');
+                return;
+            }
+
+            const views = ['home', 'exam', 'result', 'history', 'admin'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            const targetEl = document.getElementById(`view-${viewName}`);
+            if (targetEl) {
+                targetEl.classList.remove('hidden');
+            }
+
+            // Update styling tombol navbar
+            const navBtns = ['home', 'history', 'admin'];
+            navBtns.forEach(btn => {
+                const el = document.getElementById(`nav-${btn}`);
+                if (!el) return;
+                if (btn === viewName) {
+                    el.className = 'nav-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-white text-primary-700 shadow-xs';
+                } else {
+                    el.className = 'nav-btn flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900';
+                }
+            });
+
+            // Sembunyikan/tampilkan navbar saat ujian aktif agar fokus
+            const navbar = document.getElementById('main-navbar');
+            if (viewName === 'exam') {
+                navbar.classList.add('opacity-95');
+            } else {
+                navbar.classList.remove('opacity-95');
+            }
+
+            // Refresh tampilan spesifik halaman
+            if (viewName === 'home') renderHomeDashboard();
+            if (viewName === 'history') renderHistoryDashboard();
+            if (viewName === 'admin') renderAdminDashboard();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        // =====================================================================
+        // 5. DASHBOARD BERANDA (HOME VIEW)
+        // =====================================================================
+        function renderHomeDashboard() {
+            document.getElementById('home-exam-title').textContent = examSettings.title;
+            document.getElementById('home-exam-category').innerHTML = `<i data-lucide="dna" class="w-3.5 h-3.5"></i> ${escapeHTML(examSettings.category)}`;
+            document.getElementById('home-exam-desc').textContent = examSettings.description;
+            document.getElementById('home-total-questions').textContent = `${bankQuestions.length} Soal`;
+            document.getElementById('home-exam-duration').textContent = `${examSettings.durationMinutes} Menit`;
+            document.getElementById('home-passing-score').textContent = `KKM ${examSettings.passingScore}`;
+
+            // Statistik singkat user
+            const totalAttempts = examHistory.length;
+            document.getElementById('home-stat-attempts').textContent = totalAttempts;
+
+            if (totalAttempts > 0) {
+                const scores = examHistory.map(h => h.score);
+                const highest = Math.max(...scores);
+                const avg = (scores.reduce((a, b) => a + b, 0) / totalAttempts).toFixed(1);
+                document.getElementById('home-stat-highest').textContent = highest;
+                document.getElementById('home-stat-average').textContent = avg;
+            } else {
+                document.getElementById('home-stat-highest').textContent = '-';
+                document.getElementById('home-stat-average').textContent = '-';
+            }
+
+            updateDurationPresetButtons();
+            lucide.createIcons();
+        }
+
+        function setQuickDuration(mins) {
+            examSettings.durationMinutes = mins;
+            saveAppData();
+            document.getElementById('home-exam-duration').textContent = `${mins} Menit`;
+            document.getElementById('custom-duration-input').value = '';
+            updateDurationPresetButtons();
+            showToast(`Durasi ujian diatur menjadi ${mins} menit.`, 'info');
+        }
+
+        function applyCustomDuration() {
+            const val = parseInt(document.getElementById('custom-duration-input').value, 10);
+            if (isNaN(val) || val < 1 || val > 300) {
+                showToast('Masukkan durasi yang valid antara 1 hingga 300 menit.', 'error');
+                return;
+            }
+            setQuickDuration(val);
+        }
+
+        function updateDurationPresetButtons() {
+            const buttons = document.querySelectorAll('.dur-preset-btn');
+            buttons.forEach(btn => {
+                const isMatch = btn.textContent.includes(`${examSettings.durationMinutes} Menit`);
+                if (isMatch) {
+                    btn.className = 'dur-preset-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-primary-600 bg-primary-50 text-primary-700 transition-all cursor-pointer';
+                } else {
+                    btn.className = 'dur-preset-btn px-3.5 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:border-primary-400 transition-all cursor-pointer';
+                }
+            });
+        }
+
+        // =====================================================================
+        // 6. ALGORITMA PENGACAKAN & MEMULAI UJIAN
+        // =====================================================================
+        function fisherYatesShuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startExam() {
+            if (bankQuestions.length === 0) {
+                showToast('Bank soal kosong! Tambahkan minimal 1 soal di Panel Admin.', 'error');
+                return;
+            }
+
+            // Hentikan timer lama jika ada
+            if (examSession.timerInterval) {
+                clearInterval(examSession.timerInterval);
+            }
+
+            // 1. Acak urutan soal
+            const shuffledQuestionsRaw = fisherYatesShuffle(bankQuestions);
+
+            // 2. Acak posisi pilihan jawaban (A, B, C, D, E) untuk setiap soal sambil melacak kunci jawaban benar
+            const preparedQuestions = shuffledQuestionsRaw.map((q) => {
+                const indexedOptions = q.options.map((text, idx) => ({
+                    text,
+                    isCorrect: idx === q.correctIndex
+                }));
+                const shuffledOptions = fisherYatesShuffle(indexedOptions);
+                const newCorrectIndex = shuffledOptions.findIndex(opt => opt.isCorrect);
+
+                return {
+                    id: q.id,
+                    category: q.category,
+                    question: q.question,
+                    options: shuffledOptions.map(o => o.text),
+                    correctIndex: newCorrectIndex,
+                    explanation: q.explanation
+                };
+            });
+
+            const totalSeconds = examSettings.durationMinutes * 60;
+
+            examSession = {
+                isActive: true,
+                questions: preparedQuestions,
+                currentIndex: 0,
+                userSelections: new Array(preparedQuestions.length).fill(null),
+                lockedAnswers: new Array(preparedQuestions.length).fill(null),
+                totalDurationSec: totalSeconds,
+                remainingSec: totalSeconds,
+                timerInterval: null,
+                fiveMinWarned: false,
+                startTime: Date.now()
+            };
+
+            // Setup header ujian
+            document.getElementById('exam-header-title').textContent = examSettings.title;
+            document.getElementById('exam-kkm-badge').textContent = `KKM: ${examSettings.passingScore}`;
+
+            // Reset gaya timer box
+            const timerBox = document.getElementById('timer-box');
+            timerBox.className = 'flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-900 text-white shadow-sm transition-colors duration-300';
+            document.getElementById('timer-icon').className = 'w-5 h-5 text-primary-400';
+
+            navigateTo('exam');
+            renderCurrentQuestion();
+            renderQuestionGrid();
+            updateExamProgressUI();
+            startCountdownTimer();
+
+            showToast('Ujian dimulai! Soal & pilihan jawaban telah diacak.', 'info');
+        }
+
+        // =====================================================================
+        // 7. COUNTDOWN TIMER & PERINGATAN 5 MENIT
+        // =====================================================================
+        function startCountdownTimer() {
+            updateTimerDisplay();
+
+            examSession.timerInterval = setInterval(() => {
+                examSession.remainingSec--;
+
+                if (examSession.remainingSec <= 0) {
+                    examSession.remainingSec = 0;
+                    updateTimerDisplay();
+                    clearInterval(examSession.timerInterval);
+                    showToast('Waktu ujian telah habis! Jawaban Anda otomatis dikoreksi.', 'warning');
+                    finishExam();
+                    return;
+                }
+
+                // Peringatan tepat saat tersisa 5 menit (300 detik)
+                if (examSession.remainingSec === 300 && !examSession.fiveMinWarned) {
+                    examSession.fiveMinWarned = true;
+                    showToast('PERINGATAN: Sisa waktu ujian tinggal 5 menit lagi!', 'warning');
+                }
+
+                // Visual alert jika sisa waktu <= 5 menit (300 detik)
+                if (examSession.remainingSec <= 300) {
+                    const timerBox = document.getElementById('timer-box');
+                    const timerIcon = document.getElementById('timer-icon');
+                    timerBox.className = 'flex items-center gap-2.5 px-4 py-2 rounded-xl bg-rose-600 text-white shadow-md shadow-rose-600/30 animate-pulse-fast transition-colors duration-300';
+                    timerIcon.className = 'w-5 h-5 text-white';
+                }
+
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(examSession.remainingSec / 60);
+            const secs = examSession.remainingSec % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            document.getElementById('exam-timer-display').textContent = formatted;
+        }
+
+        // =====================================================================
+        // 8. RENDER SOAL, PILIHAN JAWABAN & PEMBAHASAN OTOMATIS
+        // =====================================================================
+        const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+        function renderCurrentQuestion() {
+            const idx = examSession.currentIndex;
+            const q = examSession.questions[idx];
+            const total = examSession.questions.length;
+            const selectedOpt = examSession.userSelections[idx];
+            const lockedOpt = examSession.lockedAnswers[idx];
+            const isLocked = lockedOpt !== null;
+
+            // Badge Nomor & Kategori
+            document.getElementById('question-number-badge').textContent = `Soal No. ${idx + 1} dari ${total}`;
+            document.getElementById('question-category-badge').textContent = q.category;
+            document.getElementById('question-text').textContent = q.question;
+
+            // Status Badge Soal
+            const statusBadge = document.getElementById('question-status-badge');
+            if (!isLocked) {
+                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600';
+                statusBadge.textContent = 'Belum Dijawab';
+            } else if (lockedOpt === q.correctIndex) {
+                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700';
+                statusBadge.textContent = '✓ Dijawab Benar';
+            } else {
+                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700';
+                statusBadge.textContent = '✕ Dijawab Salah';
+            }
+
+            // Render 5 Pilihan Jawaban (A - E)
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((optText, optIdx) => {
+                const letter = OPTION_LETTERS[optIdx];
+                const btn = document.createElement('button');
+                btn.type = 'button';
+
+                let cardStyle = 'border-slate-200 bg-white hover:border-primary-400 hover:bg-primary-50/30 text-slate-800';
+                let badgeStyle = 'bg-slate-100 text-slate-700 border-slate-200';
+                let statusIconHTML = '';
+
+                if (!isLocked) {
+                    // Mode memilih (belum dikunci)
+                    if (selectedOpt === optIdx) {
+                        cardStyle = 'border-primary-600 bg-primary-50/70 ring-2 ring-primary-600/20 text-slate-900';
+                        badgeStyle = 'bg-primary-600 text-white border-primary-600';
+                    }
+                } else {
+                    // Mode terkunci (sudah klik tombol "Jawab")
+                    if (optIdx === q.correctIndex) {
+                        // Opsi jawaban yang benar selalu hijau
+                        cardStyle = 'locked border-emerald-500 bg-emerald-50/90 ring-2 ring-emerald-500/20 text-emerald-950 cursor-default';
+                        badgeStyle = 'bg-emerald-600 text-white border-emerald-600';
+                        statusIconHTML = `<span class="ml-auto inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0"><i data-lucide="check" class="w-3.5 h-3.5"></i> Benar</span>`;
+                    } else if (optIdx === lockedOpt && lockedOpt !== q.correctIndex) {
+                        // Opsi yang dipilih user tetapi salah -> merah
+                        cardStyle = 'locked border-rose-500 bg-rose-50/90 ring-2 ring-rose-500/20 text-rose-950 cursor-default';
+                        badgeStyle = 'bg-rose-600 text-white border-rose-600';
+                        statusIconHTML = `<span class="ml-auto inline-flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-100 px-2.5 py-1 rounded-lg shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i> Jawaban Anda</span>`;
+                    } else {
+                        cardStyle = 'locked border-slate-200/70 bg-slate-50/50 text-slate-400 opacity-75 cursor-default';
+                        badgeStyle = 'bg-slate-100 text-slate-400 border-slate-200';
+                    }
+                }
+
+                btn.className = `option-card w-full text-left p-4 rounded-xl border-2 flex items-center gap-3.5 cursor-pointer ${cardStyle}`;
+                btn.disabled = isLocked;
+                btn.onclick = () => selectOption(optIdx);
+
+                btn.innerHTML = `
+                    <span class="w-9 h-9 rounded-xl border font-display font-bold text-sm flex items-center justify-center shrink-0 transition-colors ${badgeStyle}">
+                        ${letter}
+                    </span>
+                    <span class="text-sm sm:text-base font-medium leading-snug flex-1">${escapeHTML(optText)}</span>
+                    ${statusIconHTML}
+                `;
+
+                optionsContainer.appendChild(btn);
+            });
+
+            // Atur Action Bar & Kotak Pembahasan
+            const actionBar = document.getElementById('answer-action-bar');
+            const submitBtn = document.getElementById('btn-submit-answer');
+            const explanationBox = document.getElementById('explanation-box');
+
+            if (!isLocked) {
+                actionBar.classList.remove('hidden');
+                submitBtn.disabled = (selectedOpt === null);
+                explanationBox.classList.add('hidden');
+            } else {
+                actionBar.classList.add('hidden');
+                explanationBox.classList.remove('hidden');
+
+                const isCorrect = (lockedOpt === q.correctIndex);
+                const expIconWrap = document.getElementById('explanation-icon-wrap');
+                const expIcon = document.getElementById('explanation-icon');
+                const expTitle = document.getElementById('explanation-status-title');
+                const expKey = document.getElementById('explanation-correct-key');
+                const expText = document.getElementById('explanation-text');
+
+                if (isCorrect) {
+                    explanationBox.className = 'mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 text-emerald-950 p-5 sm:p-6 animate-slide-up';
+                    expIconWrap.className = 'w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5';
+                    expIcon.setAttribute('data-lucide', 'check-circle-2');
+                    expTitle.textContent = 'Jawaban Anda Benar!';
+                    expTitle.className = 'font-display font-extrabold text-base sm:text-lg text-emerald-800';
+                    expKey.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+                } else {
+                    explanationBox.className = 'mt-6 rounded-2xl border border-rose-200 bg-rose-50/80 text-rose-950 p-5 sm:p-6 animate-slide-up';
+                    expIconWrap.className = 'w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 mt-0.5';
+                    expIcon.setAttribute('data-lucide', 'x-circle');
+                    expTitle.textContent = 'Jawaban Anda Kurang Tepat';
+                    expTitle.className = 'font-display font-extrabold text-base sm:text-lg text-rose-800';
+                    expKey.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-white text-emerald-700 border border-emerald-300';
+                }
+
+                expKey.textContent = `Kunci Jawaban: ${OPTION_LETTERS[q.correctIndex]}`;
+                expText.textContent = q.explanation;
+            }
+
+            // Update Tombol Navigasi Bawah
+            const prevBtn = document.getElementById('btn-prev-question');
+            const nextBtn = document.getElementById('btn-next-question');
+            const nextLabel = document.getElementById('btn-next-label');
+
+            prevBtn.disabled = (idx === 0);
+
+            if (idx === total - 1) {
+                nextLabel.textContent = isLocked ? 'Selesaikan Ujian' : 'Soal Terakhir (Selesai)';
+                nextBtn.className = 'inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all cursor-pointer';
+            } else {
+                nextLabel.textContent = isLocked ? 'Soal Berikutnya' : 'Selanjutnya';
+                nextBtn.className = 'inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl font-display font-bold text-xs sm:text-sm text-white bg-primary-600 hover:bg-primary-700 shadow-sm transition-all cursor-pointer';
+            }
+
+            renderQuestionGrid();
+            lucide.createIcons();
+        }
+
+        function selectOption(optIdx) {
+            const idx = examSession.currentIndex;
+            if (examSession.lockedAnswers[idx] !== null) return; // Sudah dikunci
+
+            examSession.userSelections[idx] = optIdx;
+            renderCurrentQuestion();
+        }
+
+        function confirmCurrentAnswer() {
+            const idx = examSession.currentIndex;
+            const selectedOpt = examSession.userSelections[idx];
+            if (selectedOpt === null) {
+                showToast('Silakan pilih salah satu jawaban terlebih dahulu.', 'warning');
+                return;
+            }
+
+            // Kunci jawaban dan tampilkan pembahasan
+            examSession.lockedAnswers[idx] = selectedOpt;
+            renderCurrentQuestion();
+            updateExamProgressUI();
+        }
+
+        function prevQuestion() {
+            if (examSession.currentIndex > 0) {
+                examSession.currentIndex--;
+                renderCurrentQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            const total = examSession.questions.length;
+            if (examSession.currentIndex < total - 1) {
+                examSession.currentIndex++;
+                renderCurrentQuestion();
+            } else {
+                // Pada soal terakhir -> buka modal konfirmasi selesai
+                openFinishModal();
+            }
+        }
+
+        function jumpToQuestion(targetIdx) {
+            examSession.currentIndex = targetIdx;
+            renderCurrentQuestion();
+        }
+
+        function renderQuestionGrid() {
+            const grid = document.getElementById('question-grid');
+            grid.innerHTML = '';
+
+            examSession.questions.forEach((q, idx) => {
+                const isCurrent = idx === examSession.currentIndex;
+                const lockedAns = examSession.lockedAnswers[idx];
+                const isAnswered = lockedAns !== null;
+
+                let btnStyle = 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
+
+                if (isCurrent) {
+                    btnStyle = 'bg-primary-600 text-white border-primary-600 ring-2 ring-primary-600/30 shadow-xs';
+                } else if (isAnswered) {
+                    if (lockedAns === q.correctIndex) {
+                        btnStyle = 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600';
+                    } else {
+                        btnStyle = 'bg-rose-500 text-white border-rose-600 hover:bg-rose-600';
+                    }
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = idx + 1;
+                btn.className = `h-10 rounded-xl border font-display font-bold text-xs sm:text-sm flex items-center justify-center transition-all cursor-pointer ${btnStyle}`;
+                btn.onclick = () => jumpToQuestion(idx);
+
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateExamProgressUI() {
+            const total = examSession.questions.length;
+            const answeredCount = examSession.lockedAnswers.filter(ans => ans !== null).length;
+            const pct = total > 0 ? Math.round((answeredCount / total) * 100) : 0;
+
+            document.getElementById('exam-progress-text').textContent = `Terjawab: ${answeredCount} / ${total}`;
+            document.getElementById('nav-answered-count').textContent = `${answeredCount}/${total}`;
+            document.getElementById('exam-progress-bar').style.width = `${pct}%`;
+        }
+
+        // =====================================================================
+        // 9. VALIDASI PENYELESAIAN UJIAN & PERHITUNGAN NILAI
+        // =====================================================================
+        function openFinishModal() {
+            const total = examSession.questions.length;
+            const answeredCount = examSession.lockedAnswers.filter(ans => ans !== null).length;
+            const unansweredCount = total - answeredCount;
+
+            const msgEl = document.getElementById('finish-modal-message');
+            if (unansweredCount > 0) {
+                msgEl.innerHTML = `Masih terdapat <strong class="text-rose-600">${unansweredCount} soal yang belum Anda jawab</strong> (atau belum dikonfirmasi dengan tombol "Jawab"). Soal yang belum dijawab akan dihitung salah. Yakin ingin menyelesaikan ujian?`;
+            } else {
+                msgEl.innerHTML = `Seluruh <strong>${total} soal</strong> telah Anda jawab dengan lengkap. Apakah Anda yakin ingin mengakhiri ujian dan melihat hasil akhir?`;
+            }
+
+            document.getElementById('modal-finish-exam').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeFinishModal() {
+            document.getElementById('modal-finish-exam').classList.add('hidden');
+        }
+
+        function finishExam() {
+            closeFinishModal();
+            if (examSession.timerInterval) {
+                clearInterval(examSession.timerInterval);
+            }
+            examSession.isActive = false;
+
+            const total = examSession.questions.length;
+            let correctCount = 0;
+            let wrongCount = 0;
+            let unansweredCount = 0;
+
+            const reviewDetails = examSession.questions.map((q, idx) => {
+                const lockedAns = examSession.lockedAnswers[idx];
+                let status = 'unanswered';
+                if (lockedAns === null) {
+                    unansweredCount++;
+                    status = 'unanswered';
+                } else if (lockedAns === q.correctIndex) {
+                    correctCount++;
+                    status = 'correct';
+                } else {
+                    wrongCount++;
+                    status = 'wrong';
+                }
+
+                return {
+                    number: idx + 1,
+                    category: q.category,
+                    question: q.question,
+                    options: q.options,
+                    userAnswerIndex: lockedAns,
+                    correctIndex: q.correctIndex,
+                    explanation: q.explanation,
+                    status
+                };
+            });
+
+            // Rumus Nilai: (Jumlah jawaban benar / Total soal) × 100
+            const rawScore = (correctCount / total) * 100;
+            const finalScore = Number.isInteger(rawScore) ? rawScore : Number(rawScore.toFixed(1));
+            const isPassed = finalScore >= examSettings.passingScore;
+
+            // Hitung waktu yang digunakan
+            const timeUsedSec = Math.max(1, examSession.totalDurationSec - examSession.remainingSec);
+            const usedMins = Math.floor(timeUsedSec / 60);
+            const usedSecs = timeUsedSec % 60;
+            const timeUsedFormatted = `${usedMins}m ${usedSecs}d`;
+
+            // Simpan ke Riwayat Ujian
+            const now = new Date();
+            const dateFormatted = now.toLocaleDateString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const attemptRecord = {
+                id: 'att_' + Date.now(),
+                attemptNumber: examHistory.length + 1,
+                date: dateFormatted,
+                examTitle: examSettings.title,
+                totalQuestions: total,
+                correctCount,
+                wrongCount,
+                unansweredCount,
+                score: finalScore,
+                passingScore: examSettings.passingScore,
+                isPassed,
+                timeUsedFormatted
+            };
+
+            examHistory.push(attemptRecord);
+            saveAppData();
+
+            lastCompletedResult = {
+                ...attemptRecord,
+                reviewDetails
+            };
+
+            renderResultPage(lastCompletedResult);
+            navigateTo('result');
+        }
+
+        // =====================================================================
+        // 10. HALAMAN HASIL & VISUALISASI GRAFIK
+        // =====================================================================
+        function renderResultPage(result) {
+            const topBanner = document.getElementById('result-top-banner');
+            const statusBadge = document.getElementById('result-status-badge');
+
+            if (result.isPassed) {
+                topBanner.className = 'h-2.5 bg-gradient-to-r from-emerald-500 to-teal-500';
+                statusBadge.className = 'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 mb-4';
+                statusBadge.innerHTML = `<i data-lucide="award" class="w-4 h-4"></i> LULUS UJIAN (KKM ${result.passingScore})`;
+            } else {
+                topBanner.className = 'h-2.5 bg-gradient-to-r from-rose-500 to-orange-500';
+                statusBadge.className = 'inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-100 text-rose-800 mb-4';
+                statusBadge.innerHTML = `<i data-lucide="alert-circle" class="w-4 h-4"></i> BELUM LULUS (KKM ${result.passingScore})`;
+            }
+
+            document.getElementById('result-final-score').textContent = result.score;
+            document.getElementById('result-exam-title').textContent = result.examTitle;
+            document.getElementById('result-accuracy-center').textContent = `${result.score}%`;
+
+            document.getElementById('result-correct-count').textContent = result.correctCount;
+            document.getElementById('result-wrong-count').textContent = result.wrongCount;
+            document.getElementById('result-unanswered-count').textContent = result.unansweredCount;
+            document.getElementById('result-time-used').textContent = result.timeUsedFormatted;
+
+            // Render Doughnut Chart
+            const ctx = document.getElementById('resultDoughnutChart').getContext('2d');
+            if (resultChartInstance) {
+                resultChartInstance.destroy();
+            }
+
+            resultChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Benar', 'Salah', 'Belum Dijawab'],
+                    datasets: [{
+                        data: [result.correctCount, result.wrongCount, result.unansweredCount],
+                        backgroundColor: ['#10b981', '#f43f5e', '#cbd5e1'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            filterResultReview('all');
+            lucide.createIcons();
+        }
+
+        function filterResultReview(filterType) {
+            if (!lastCompletedResult) return;
+
+            // Update tombol filter aktif
+            const buttons = document.querySelectorAll('.res-filter-btn');
+            buttons.forEach(btn => {
+                const label = btn.textContent.toLowerCase();
+                const active = (filterType === 'all' && label === 'semua') ||
+                               (filterType === 'correct' && label === 'benar') ||
+                               (filterType === 'wrong' && label.includes('salah'));
+                btn.className = active
+                    ? 'res-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary-600 text-white cursor-pointer'
+                    : 'res-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer';
+            });
+
+            const listContainer = document.getElementById('result-review-list');
+            listContainer.innerHTML = '';
+
+            const filtered = lastCompletedResult.reviewDetails.filter(item => {
+                if (filterType === 'correct') return item.status === 'correct';
+                if (filterType === 'wrong') return item.status === 'wrong' || item.status === 'unanswered';
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<p class="text-center text-sm text-slate-500 py-8">Tidak ada soal pada kategori filter ini.</p>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let borderClass = 'border-slate-200 bg-slate-50/40';
+                let badgeHTML = `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-700">Tidak Dijawab</span>`;
+
+                if (item.status === 'correct') {
+                    borderClass = 'border-emerald-200 bg-emerald-50/30';
+                    badgeHTML = `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800">✓ Benar</span>`;
+                } else if (item.status === 'wrong') {
+                    borderClass = 'border-rose-200 bg-rose-50/30';
+                    badgeHTML = `<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800">✕ Salah</span>`;
+                }
+
+                const userAnsText = item.userAnswerIndex !== null
+                    ? `${OPTION_LETTERS[item.userAnswerIndex]}. ${item.options[item.userAnswerIndex]}`
+                    : 'Tidak dijawab';
+                const correctAnsText = `${OPTION_LETTERS[item.correctIndex]}. ${item.options[item.correctIndex]}`;
+
+                const card = document.createElement('div');
+                card.className = `rounded-2xl border p-5 ${borderClass}`;
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="font-display font-bold text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-white">No. ${item.number}</span>
+                            <span class="text-xs font-semibold text-slate-500">${escapeHTML(item.category)}</span>
+                        </div>
+                        ${badgeHTML}
+                    </div>
+                    <p class="font-medium text-sm sm:text-base text-slate-900 mb-3">${escapeHTML(item.question)}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm mb-3">
+                        <div class="p-3 rounded-xl bg-white border border-slate-200/80">
+                            <span class="block text-[11px] font-bold uppercase text-slate-400 mb-0.5">Jawaban Anda:</span>
+                            <span class="font-semibold ${item.status === 'correct' ? 'text-emerald-700' : (item.status === 'wrong' ? 'text-rose-700' : 'text-slate-500')}">${escapeHTML(userAnsText)}</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                            <span class="block text-[11px] font-bold uppercase text-emerald-700 mb-0.5">Kunci Jawaban Benar:</span>
+                            <span class="font-semibold text-emerald-900">${escapeHTML(correctAnsText)}</span>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-white/90 border border-slate-200/70 text-xs sm:text-sm text-slate-700">
+                        <span class="font-bold text-primary-700">Pembahasan:</span> ${escapeHTML(item.explanation)}
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        // =====================================================================
+        // 11. DASHBOARD RIWAYAT UJIAN & LINE CHART
+        // =====================================================================
+        function renderHistoryDashboard() {
+            const total = examHistory.length;
+            document.getElementById('hist-total-attempts').textContent = total;
+
+            if (total > 0) {
+                const scores = examHistory.map(h => h.score);
+                const highest = Math.max(...scores);
+                const avg = (scores.reduce((a, b) => a + b, 0) / total).toFixed(1);
+                document.getElementById('hist-highest-score').textContent = highest;
+                document.getElementById('hist-average-score').textContent = avg;
+            } else {
+                document.getElementById('hist-highest-score').textContent = '-';
+                document.getElementById('hist-average-score').textContent = '-';
+            }
+
+            // Render Line Chart
+            const ctx = document.getElementById('historyLineChart').getContext('2d');
+            if (historyChartInstance) {
+                historyChartInstance.destroy();
+            }
+
+            const labels = examHistory.map((_, i) => `Percobaan #${i + 1}`);
+            const dataPoints = examHistory.map(h => h.score);
+
+            historyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['Belum ada data'],
+                    datasets: [{
+                        label: 'Nilai Ujian',
+                        data: dataPoints.length ? dataPoints : [0],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#7c3aed',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Render Tabel Riwayat (terbaru di atas)
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+
+            if (total === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-10 text-center text-slate-500 text-sm">
+                            Belum ada riwayat percobaan ujian. Silakan mulai ujian dari menu <strong>Beranda</strong>.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            [...examHistory].reverse().forEach((item, idx) => {
+                const attemptNum = total - idx;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-3.5 px-5 font-display font-bold text-slate-800">#${attemptNum}</td>
+                    <td class="py-3.5 px-5 text-xs text-slate-500">${escapeHTML(item.date)}</td>
+                    <td class="py-3.5 px-5 font-medium text-slate-800 max-w-xs truncate">${escapeHTML(item.examTitle)}</td>
+                    <td class="py-3.5 px-5 text-center text-xs font-semibold">
+                        <span class="text-emerald-600">${item.correctCount}B</span> /
+                        <span class="text-rose-600">${item.wrongCount}S</span> /
+                        <span class="text-slate-400">${item.unansweredCount}K</span>
+                    </td>
+                    <td class="py-3.5 px-5 text-center text-xs font-medium text-slate-600">${escapeHTML(item.timeUsedFormatted)}</td>
+                    <td class="py-3.5 px-5 text-center font-display font-extrabold text-base text-primary-700">${item.score}</td>
+                    <td class="py-3.5 px-5 text-center">
+                        ${item.isPassed
+                            ? '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-700">LULUS</span>'
+                            : '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700">TIDAK LULUS</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearAllHistory() {
+            if (examHistory.length === 0) {
+                showToast('Riwayat nilai sudah kosong.', 'info');
+                return;
+            }
+            examHistory = [];
+            saveAppData();
+            renderHistoryDashboard();
+            showToast('Seluruh riwayat nilai berhasil dihapus.', 'success');
+        }
+
+        // =====================================================================
+        // 12. PANEL ADMIN (PENGATURAN UJIAN, KATEGORI & BANK SOAL)
+        // =====================================================================
+        function renderAdminDashboard() {
+            // Isi form pengaturan
+            document.getElementById('admin-exam-title').value = examSettings.title;
+            document.getElementById('admin-exam-desc').value = examSettings.description;
+            document.getElementById('admin-exam-duration').value = examSettings.durationMinutes;
+            document.getElementById('admin-passing-score').value = examSettings.passingScore;
+
+            renderCategorySelectsAndBadges();
+            renderAdminQuestionList();
+            lucide.createIcons();
+        }
+
+        function renderCategorySelectsAndBadges() {
+            // Dropdown kategori utama pengaturan
+            const mainCatSelect = document.getElementById('admin-exam-category');
+            mainCatSelect.innerHTML = examSettings.categories.map(cat =>
+                `<option value="${escapeHTML(cat)}" ${cat === examSettings.category ? 'selected' : ''}>${escapeHTML(cat)}</option>`
+            ).join('');
+
+            // Dropdown filter kategori bank soal
+            const filterSelect = document.getElementById('admin-filter-category');
+            const currentFilter = filterSelect.value || 'ALL';
+            filterSelect.innerHTML = `<option value="ALL">Semua Kategori</option>` +
+                examSettings.categories.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+            filterSelect.value = currentFilter;
+
+            // Badge daftar kategori
+            const catListDiv = document.getElementById('admin-category-list');
+            catListDiv.innerHTML = examSettings.categories.map(cat => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                    ${escapeHTML(cat)}
+                    ${examSettings.categories.length > 1 ? `
+                        <button type="button" onclick="removeCategory('${escapeHTML(cat)}')" class="text-slate-400 hover:text-rose-600 cursor-pointer" title="Hapus Kategori">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    ` : ''}
+                </span>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function addCategory() {
+            const input = document.getElementById('new-category-input');
+            const val = input.value.trim();
+            if (!val) return;
+            if (examSettings.categories.includes(val)) {
+                showToast('Kategori tersebut sudah ada.', 'warning');
+                return;
+            }
+            examSettings.categories.push(val);
+            saveAppData();
+            input.value = '';
+            renderCategorySelectsAndBadges();
+            showToast(`Kategori "${val}" berhasil ditambahkan.`, 'success');
+        }
+
+        function removeCategory(catName) {
+            examSettings.categories = examSettings.categories.filter(c => c !== catName);
+            if (examSettings.category === catName && examSettings.categories.length > 0) {
+                examSettings.category = examSettings.categories[0];
+            }
+            saveAppData();
+            renderCategorySelectsAndBadges();
+            showToast(`Kategori "${catName}" dihapus.`, 'info');
+        }
+
+        function saveExamSettings(e) {
+            e.preventDefault();
+            examSettings.title = document.getElementById('admin-exam-title').value.trim();
+            examSettings.category = document.getElementById('admin-exam-category').value;
+            examSettings.description = document.getElementById('admin-exam-desc').value.trim();
+            examSettings.durationMinutes = parseInt(document.getElementById('admin-exam-duration').value, 10) || 30;
+            examSettings.passingScore = parseInt(document.getElementById('admin-passing-score').value, 10) || 75;
+
+            saveAppData();
+            showToast('Pengaturan ujian berhasil disimpan!', 'success');
+        }
+
+        function renderAdminQuestionList() {
+            const searchQuery = document.getElementById('admin-search-input').value.toLowerCase().trim();
+            const filterCat = document.getElementById('admin-filter-category').value;
+
+            document.getElementById('admin-question-count-badge').textContent = `${bankQuestions.length} Soal`;
+
+            const filtered = bankQuestions.filter(q => {
+                const matchSearch = q.question.toLowerCase().includes(searchQuery) ||
+                                    q.explanation.toLowerCase().includes(searchQuery);
+                const matchCat = (filterCat === 'ALL') || (q.category === filterCat);
+                return matchSearch && matchCat;
+            });
+
+            const container = document.getElementById('admin-question-list');
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-sm text-slate-500">Tidak ada soal yang cocok dengan pencarian/filter.</div>`;
+                return;
+            }
+
+            filtered.forEach((q, idx) => {
+                const card = document.createElement('div');
+                card.className = 'p-4 sm:p-5 rounded-2xl border border-slate-200/90 hover:border-primary-300 bg-slate-50/40 transition-all';
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-start justify-between gap-3 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-primary-600 text-white font-display font-bold text-xs">#${idx + 1}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-accent-50 text-accent-700 border border-accent-100 text-xs font-semibold">${escapeHTML(q.category)}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">Kunci: ${OPTION_LETTERS[q.correctIndex]}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="openQuestionModal('${q.id}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors cursor-pointer">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                <span>Edit</span>
+                            </button>
+                            <button onclick="deleteQuestion('${q.id}')" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors cursor-pointer">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>Hapus</span>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="font-medium text-sm text-slate-900 mb-2">${escapeHTML(q.question)}</p>
+                    <p class="text-xs text-slate-500 line-clamp-2"><strong class="text-slate-700">Pembahasan:</strong> ${escapeHTML(q.explanation)}</p>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function openQuestionModal(questionId = null) {
+            const modal = document.getElementById('modal-question-form');
+            const titleEl = document.getElementById('question-modal-title');
+            const catSelect = document.getElementById('modal-q-category');
+
+            catSelect.innerHTML = examSettings.categories.map(cat =>
+                `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`
+            ).join('');
+
+            if (questionId) {
+                const q = bankQuestions.find(item => item.id === questionId);
+                if (!q) return;
+                titleEl.textContent = 'Edit Soal Ujian';
+                document.getElementById('edit-question-id').value = q.id;
+                catSelect.value = examSettings.categories.includes(q.category) ? q.category : examSettings.categories[0];
+                document.getElementById('modal-q-correct').value = q.correctIndex;
+                document.getElementById('modal-q-text').value = q.question;
+                for (let i = 0; i < 5; i++) {
+                    document.getElementById(`modal-q-opt-${i}`).value = q.options[i] || '';
+                }
+                document.getElementById('modal-q-explanation').value = q.explanation;
+            } else {
+                titleEl.textContent = 'Tambah Soal Baru';
+                document.getElementById('question-editor-form').reset();
+                document.getElementById('edit-question-id').value = '';
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeQuestionModal() {
+            document.getElementById('modal-question-form').classList.add('hidden');
+        }
+
+        function saveQuestionFromModal(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-question-id').value;
+            const category = document.getElementById('modal-q-category').value;
+            const correctIndex = parseInt(document.getElementById('modal-q-correct').value, 10);
+            const questionText = document.getElementById('modal-q-text').value.trim();
+            const explanation = document.getElementById('modal-q-explanation').value.trim();
+            const options = [
+                document.getElementById('modal-q-opt-0').value.trim(),
+                document.getElementById('modal-q-opt-1').value.trim(),
+                document.getElementById('modal-q-opt-2').value.trim(),
+                document.getElementById('modal-q-opt-3').value.trim(),
+                document.getElementById('modal-q-opt-4').value.trim()
+            ];
+
+            if (editId) {
+                const idx = bankQuestions.findIndex(q => q.id === editId);
+                if (idx !== -1) {
+                    bankQuestions[idx] = { id: editId, category, question: questionText, options, correctIndex, explanation };
+                    showToast('Perubahan soal berhasil disimpan!', 'success');
+                }
+            } else {
+                const newQuestion = {
+                    id: 'q_' + Date.now(),
+                    category,
+                    question: questionText,
+                    options,
+                    correctIndex,
+                    explanation
+                };
+                bankQuestions.push(newQuestion);
+                showToast('Soal baru berhasil ditambahkan ke bank soal!', 'success');
+            }
+
+            saveAppData();
+            closeQuestionModal();
+            renderAdminQuestionList();
+        }
+
+        function deleteQuestion(questionId) {
+            if (bankQuestions.length <= 1) {
+                showToast('Minimal harus tersisa 1 soal di bank soal.', 'error');
+                return;
+            }
+            bankQuestions = bankQuestions.filter(q => q.id !== questionId);
+            saveAppData();
+            renderAdminQuestionList();
+            showToast('Soal berhasil dihapus dari bank soal.', 'info');
+        }
+
+        function resetDefaultQuestions() {
+            bankQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+            examSettings = { ...DEFAULT_SETTINGS };
+            saveAppData();
+            renderAdminDashboard();
+            showToast('Bank soal dan pengaturan berhasil dikembalikan ke 20 soal default!', 'success');
+        }
+
+        // =====================================================================
+        // 13. UTILITAS: TOAST NOTIFICATION & XSS ESCAPE
+        // =====================================================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let colors = 'bg-slate-900 text-white border-slate-700';
+            let iconName = 'info';
+
+            if (type === 'success') {
+                colors = 'bg-emerald-600 text-white border-emerald-500';
+                iconName = 'check-circle';
+            } else if (type === 'warning') {
+                colors = 'bg-amber-500 text-slate-950 border-amber-400 font-semibold';
+                iconName = 'alert-triangle';
+            } else if (type === 'error') {
+                colors = 'bg-rose-600 text-white border-rose-500';
+                iconName = 'x-circle';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3.5 rounded-2xl border shadow-xl text-xs sm:text-sm animate-slide-up ${colors}`;
+            toast.innerHTML = `
+                <i data-lucide="${iconName}" class="w-5 h-5 shrink-0"></i>
+                <span class="flex-1 leading-snug">${escapeHTML(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                toast.style.transition = 'all 0.25s ease';
+                setTimeout(() => toast.remove(), 250);
+            }, 3800);
+        }
+
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return str;
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // =====================================================================
+        // 14. BOOTSTRAP APLIKASI SAAT HALAMAN DIMUAT
+        // =====================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            loadAppData();
+            navigateTo('home');
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
